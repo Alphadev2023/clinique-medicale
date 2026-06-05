@@ -1,0 +1,180 @@
+<div
+  class="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center p-4"
+>
+  <!-- Background decoration -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div
+      class="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-3xl"
+    ></div>
+    <div
+      class="absolute -bottom-40 -left-40 w-80 h-80 bg-white/5 rounded-full blur-3xl"
+    ></div>
+  </div>
+
+  <div class="w-full max-w-md relative animate-scale-in">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div
+        class="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-4 shadow-lg"
+      >
+        <lucide-icon [img]="LogIn" color="white" size="28"></lucide-icon>
+      </div>
+      <h1 class="text-3xl font-bold text-white">Clinique Médicale</h1>
+      <p class="text-blue-200 mt-2 text-sm">
+        Connectez-vous à votre espace de travail
+      </p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8">
+      @if (error()) {
+        <div
+          class="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl mb-6 flex items-center gap-2 text-sm animate-fade-in"
+        >
+          <lucide-icon [img]="Lock" size="16"></lucide-icon>
+          {{ error() }}
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5"
+            >Adresse email</label
+          >
+          <div class="relative">
+            <div
+              class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
+            >
+              <lucide-icon [img]="Mail" size="16" color="#9ca3af"></lucide-icon>
+            </div>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="exemple&#64;clinique.com"
+              class="input-field pl-10"
+              [class.border-red-300]="emailCtrl.invalid && emailCtrl.touched"
+            />
+          </div>
+          @if (emailCtrl.invalid && emailCtrl.touched) {
+            <p class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+              Email invalide
+            </p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5"
+            >Mot de passe</label
+          >
+          <div class="relative">
+            <div
+              class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
+            >
+              <lucide-icon [img]="Lock" size="16" color="#9ca3af"></lucide-icon>
+            </div>
+            <input
+              [type]="showPass() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••"
+              class="input-field pl-10 pr-10"
+              [class.border-red-300]="
+                passwordCtrl.invalid && passwordCtrl.touched
+              "
+            />
+            <button
+              type="button"
+              (click)="togglePassword()"
+              class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <lucide-icon
+                [img]="showPass() ? EyeOff : Eye"
+                size="16"
+              ></lucide-icon>
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="form.invalid || loading()"
+          class="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base mt-2"
+        >
+          @if (loading()) {
+            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            Connexion en cours...
+          } @else {
+            <lucide-icon [img]="LogIn" size="18"></lucide-icon>
+            Se connecter
+          }
+        </button>
+      </form>
+
+      <!-- Comptes test -->
+      <div class="mt-6 pt-6 border-t border-gray-100">
+        <p
+          class="text-xs text-gray-400 text-center mb-3 font-medium uppercase tracking-wide"
+        >
+          Comptes de démonstration
+        </p>
+        <div class="grid grid-cols-3 gap-2">
+          <div
+            class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-center cursor-pointer hover:bg-blue-100 transition-colors"
+            (click)="
+              form.patchValue({
+                email: 'admin&#64;clinique.com',
+                password: 'admin123',
+              })
+            "
+          >
+            <div class="text-xs font-semibold text-blue-700">Admin</div>
+            <div class="text-xs text-gray-500 mt-0.5">
+              admin&#64;clinique.com
+            </div>
+          </div>
+          <div
+            class="bg-green-50 border border-green-100 rounded-xl p-2.5 text-center cursor-pointer hover:bg-green-100 transition-colors"
+            (click)="
+              form.patchValue({
+                email: 'medecin&#64;clinique.com',
+                password: 'medecin123',
+              })
+            "
+          >
+            <div class="text-xs font-semibold text-green-700">Médecin</div>
+            <div class="text-xs text-gray-500 mt-0.5">
+              medecin&#64;clinique.com
+            </div>
+          </div>
+          <div
+            class="bg-purple-50 border border-purple-100 rounded-xl p-2.5 text-center cursor-pointer hover:bg-purple-100 transition-colors"
+            (click)="
+              form.patchValue({
+                email: 'secretaire&#64;clinique.com',
+                password: 'secretaire123',
+              })
+            "
+          >
+            <div class="text-xs font-semibold text-purple-700">Secrétaire</div>
+            <div class="text-xs text-gray-500 mt-0.5">
+              secretaire&#64;clinique.com
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

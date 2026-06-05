@@ -1,0 +1,90 @@
+@if (totalItems > 0) {
+  <div
+    class="flex items-center justify-between px-4 py-3 border-t border-gray-100"
+  >
+    <!-- Info + taille de page -->
+    <div class="flex items-center gap-4">
+      <p class="text-sm text-gray-500">
+        <span class="font-medium text-gray-700"
+          >{{ startItem }}-{{ endItem }}</span
+        >
+        sur
+        <span class="font-medium text-gray-700">{{ totalItems }}</span>
+        résultat(s)
+      </p>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-400">Afficher</span>
+        <select
+          class="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          [value]="pageSize"
+          (change)="onPageSizeChange($event)"
+        >
+          @for (size of pageSizes; track size) {
+            <option [value]="size" [selected]="size === pageSize">
+              {{ size }}
+            </option>
+          }
+        </select>
+        <span class="text-xs text-gray-400">par page</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="flex items-center gap-1">
+      <!-- Premier -->
+      <button
+        (click)="goTo(1)"
+        [disabled]="currentPage === 1"
+        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+      >
+        <lucide-icon [img]="ChevronsLeft" size="16"></lucide-icon>
+      </button>
+
+      <!-- Précédent -->
+      <button
+        (click)="goTo(currentPage - 1)"
+        [disabled]="currentPage === 1"
+        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+      >
+        <lucide-icon [img]="ChevronLeft" size="16"></lucide-icon>
+      </button>
+
+      <!-- Pages -->
+      @for (page of pages; track $index) {
+        @if (page === -1) {
+          <span class="px-2 text-gray-400 text-sm">...</span>
+        } @else {
+          <button
+            (click)="goTo(page)"
+            class="min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors"
+            [class.bg-blue-600]="page === currentPage"
+            [class.text-white]="page === currentPage"
+            [class.shadow-sm]="page === currentPage"
+            [class.text-gray-600]="page !== currentPage"
+            [class.hover:bg-gray-100]="page !== currentPage"
+          >
+            {{ page }}
+          </button>
+        }
+      }
+
+      <!-- Suivant -->
+      <button
+        (click)="goTo(currentPage + 1)"
+        [disabled]="currentPage === totalPages"
+        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+      >
+        <lucide-icon [img]="ChevronRight" size="16"></lucide-icon>
+      </button>
+
+      <!-- Dernier -->
+      <button
+        (click)="goTo(totalPages)"
+        [disabled]="currentPage === totalPages"
+        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+      >
+        <lucide-icon [img]="ChevronsRight" size="16"></lucide-icon>
+      </button>
+    </div>
+  </div>
+}

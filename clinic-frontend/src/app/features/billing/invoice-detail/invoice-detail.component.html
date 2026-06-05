@@ -1,0 +1,228 @@
+<div class="space-y-6">
+  <a
+    routerLink="/billing"
+    class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
+  >
+    <lucide-icon [img]="ArrowLeft" size="16"></lucide-icon>
+    Retour aux factures
+  </a>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <svg
+        class="animate-spin h-8 w-8 text-blue-600"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+    </div>
+
+  } @else if (invoice()) {
+    <!-- Header -->
+    <div class="card">
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center"
+          >
+            <lucide-icon
+              [img]="Receipt"
+              size="28"
+              color="#2563eb"
+            ></lucide-icon>
+          </div>
+          <div>
+            <div class="flex items-center gap-3">
+              <h1 class="text-xl font-bold text-gray-900">Facture</h1>
+              <span [class]="getStatusClass(invoice()!.status)">
+                {{ getStatusLabel(invoice()!.status) }}
+              </span>
+            </div>
+            <p class="text-sm text-gray-500 mt-1">
+              Créée le {{ invoice()!.createdAt | date: "dd/MM/yyyy" }}
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          @if (
+            invoice()!.status === "EN_ATTENTE" ||
+            invoice()!.status === "PARTIELLEMENT_PAYEE"
+          ) {
+            <button
+              (click)="showPaiement.set(true)"
+              class="btn-primary flex items-center gap-2 text-sm"
+            >
+              <lucide-icon [img]="CreditCard" size="16"></lucide-icon>
+              Paiement
+            </button>
+            <button
+              (click)="annuler()"
+              class="btn-danger flex items-center gap-2 text-sm"
+            >
+              <lucide-icon [img]="XCircle" size="16"></lucide-icon>
+              Annuler
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Lignes de facturation -->
+      <div class="lg:col-span-2 card">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+          Lignes de facturation
+        </h2>
+        <table class="w-full text-sm">
+          <thead class="border-b border-gray-200">
+            <tr>
+              <th class="text-left py-2 text-gray-500 font-medium">
+                Description
+              </th>
+              <th class="text-center py-2 text-gray-500 font-medium">Qté</th>
+              <th class="text-right py-2 text-gray-500 font-medium">
+                Prix unit.
+              </th>
+              <th class="text-right py-2 text-gray-500 font-medium">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ligne of invoice()!.lignes; track $index) {
+              <tr class="border-b border-gray-50">
+                <td class="py-3 text-gray-900">{{ ligne.description }}</td>
+                <td class="py-3 text-center text-gray-600">
+                  {{ ligne.quantite }}
+                </td>
+                <td class="py-3 text-right text-gray-600">
+                  {{ formatMontant(ligne.prixUnitaire) }}
+                </td>
+                <td class="py-3 text-right font-medium text-gray-900">
+                  {{
+                    formatMontant(
+                      getLigneTotal(ligne.quantite, ligne.prixUnitaire)
+                    )
+                  }}
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-gray-200">
+              <td
+                colspan="3"
+                class="py-3 text-right font-semibold text-gray-900"
+              >
+                Total
+              </td>
+              <td class="py-3 text-right font-bold text-xl text-gray-900">
+                {{ formatMontant(invoice()!.montantTotal) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Résumé paiement -->
+      <div class="space-y-4">
+        <div class="card">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Résumé</h2>
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Montant total</span>
+              <span class="font-bold text-gray-900">{{
+                formatMontant(invoice()!.montantTotal)
+              }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Montant payé</span>
+              <span class="font-medium text-green-600">{{
+                formatMontant(invoice()!.montantPaye)
+              }}</span>
+            </div>
+            <div class="border-t border-gray-200 pt-3 flex justify-between">
+              <span class="text-gray-700 font-medium">Restant</span>
+              <span class="font-bold text-amber-600 text-lg">{{
+                formatMontant(invoice()!.montantRestant)
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card text-sm space-y-2">
+          <h3 class="font-semibold text-gray-900 mb-3">Informations</h3>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Date facture</span>
+            <span class="text-gray-900">{{ invoice()!.dateFacture }}</span>
+          </div>
+          @if (invoice()!.dateEcheance) {
+            <div class="flex justify-between">
+              <span class="text-gray-500">Échéance</span>
+              <span class="text-gray-900">{{ invoice()!.dateEcheance }}</span>
+            </div>
+          }
+          @if (invoice()!.notes) {
+            <div class="pt-2 border-t border-gray-100">
+              <p class="text-gray-500 mb-1">Notes</p>
+              <p class="text-gray-700">{{ invoice()!.notes }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Paiement modal -->
+@if (showPaiement()) {
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+  >
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        Enregistrer un paiement
+      </h3>
+      <p class="text-sm text-gray-600 mb-4">
+        Restant :
+        <strong class="text-amber-600">{{
+          formatMontant(invoice()!.montantRestant)
+        }}</strong>
+      </p>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1"
+          >Montant</label
+        >
+        <input
+          type="number"
+          class="input-field"
+          [ngModel]="montantPaiement()"
+          (ngModelChange)="montantPaiement.set($event)"
+        />
+      </div>
+      <div class="flex gap-3">
+        <button (click)="showPaiement.set(false)" class="btn-secondary flex-1">
+          Annuler
+        </button>
+        <button
+          (click)="confirmerPaiement()"
+          class="btn-primary flex-1 flex items-center justify-center gap-2"
+        >
+          <lucide-icon [img]="CreditCard" size="16"></lucide-icon>
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+}

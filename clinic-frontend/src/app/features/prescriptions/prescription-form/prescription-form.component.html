@@ -1,0 +1,292 @@
+<div
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col"
+    style="max-height: 90vh"
+  >
+    <!-- Header sticky -->
+    <div
+      class="flex items-center justify-between p-6 border-b border-gray-100 shrink-0"
+    >
+      <h2 class="text-lg font-semibold text-gray-900">Nouvelle prescription</h2>
+      <button
+        (click)="cancelled.emit()"
+        class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+      >
+        <lucide-icon [img]="X" size="20"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Contenu scrollable -->
+    <div class="overflow-y-auto flex-1">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="p-6 space-y-5">
+        @if (error()) {
+          <div
+            class="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2"
+          >
+            {{ error() }}
+          </div>
+        }
+
+        <!-- Patient + Médecin -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-gray-700"
+              >Patient <span class="text-red-500">*</span></label
+            >
+            <select
+              formControlName="patientId"
+              class="input-field"
+              [class.border-red-300]="
+                form.get('patientId')?.invalid && form.get('patientId')?.touched
+              "
+            >
+              <option value="">Sélectionner</option>
+              @for (p of patients(); track p.id) {
+                <option [value]="p.id">{{ p.prenom }} {{ p.nom }}</option>
+              }
+            </select>
+            @if (
+              form.get("patientId")?.invalid && form.get("patientId")?.touched
+            ) {
+              <p class="text-xs text-red-600">Patient requis</p>
+            }
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-gray-700"
+              >Médecin <span class="text-red-500">*</span></label
+            >
+            <select
+              formControlName="medecinId"
+              class="input-field"
+              [class.border-red-300]="
+                form.get('medecinId')?.invalid && form.get('medecinId')?.touched
+              "
+            >
+              <option value="">Sélectionner</option>
+              @for (m of medecins(); track m.id) {
+                <option [value]="m.id">Dr. {{ m.prenom }} {{ m.nom }}</option>
+              }
+            </select>
+            @if (
+              form.get("medecinId")?.invalid && form.get("medecinId")?.touched
+            ) {
+              <p class="text-xs text-red-600">Médecin requis</p>
+            }
+          </div>
+
+          <!-- Dates -->
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-gray-700"
+              >Date prescription <span class="text-red-500">*</span></label
+            >
+            <input
+              type="date"
+              formControlName="datePrescription"
+              class="input-field"
+              [class.border-red-300]="
+                form.get('datePrescription')?.invalid &&
+                form.get('datePrescription')?.touched
+              "
+            />
+            @if (
+              form.get("datePrescription")?.invalid &&
+              form.get("datePrescription")?.touched
+            ) {
+              <p class="text-xs text-red-600">Date requise</p>
+            }
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-gray-700"
+              >Date expiration <span class="text-red-500">*</span></label
+            >
+            <input
+              type="date"
+              formControlName="dateExpiration"
+              class="input-field"
+              [class.border-red-300]="
+                form.get('dateExpiration')?.invalid &&
+                form.get('dateExpiration')?.touched
+              "
+            />
+            @if (
+              form.get("dateExpiration")?.invalid &&
+              form.get("dateExpiration")?.touched
+            ) {
+              <p class="text-xs text-red-600">Date requise</p>
+            }
+          </div>
+
+          <!-- Diagnostic -->
+          <div class="col-span-2 space-y-1.5">
+            <label class="block text-sm font-medium text-gray-700"
+              >Diagnostic</label
+            >
+            <input
+              type="text"
+              formControlName="diagnostic"
+              class="input-field"
+              placeholder="Hypertension artérielle"
+            />
+          </div>
+
+          <!-- Notes -->
+          <div class="col-span-2 space-y-1.5">
+            <label class="block text-sm font-medium text-gray-700">Notes</label>
+            <textarea
+              formControlName="notes"
+              class="input-field"
+              rows="2"
+              placeholder="Notes supplémentaires..."
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Médicaments -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+            >
+              Médicaments
+            </h3>
+            <button
+              type="button"
+              (click)="addDrug()"
+              class="btn-secondary flex items-center gap-1 text-xs py-1.5"
+            >
+              <lucide-icon [img]="Plus" size="14"></lucide-icon>
+              Ajouter
+            </button>
+          </div>
+          <div formArrayName="medicaments" class="space-y-3">
+            @for (drug of medicamentsArray.controls; track $index) {
+              <div
+                [formGroupName]="$index"
+                class="bg-gray-50 rounded-xl p-4 border border-gray-100"
+              >
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-medium text-gray-600"
+                      >Médicament <span class="text-red-500">*</span></label
+                    >
+                    <input
+                      type="text"
+                      formControlName="medicament"
+                      class="input-field text-sm"
+                      placeholder="Amlodipine"
+                      [class.border-red-300]="
+                        medicamentsArray.at($index).get('medicament')
+                          ?.invalid &&
+                        medicamentsArray.at($index).get('medicament')?.touched
+                      "
+                    />
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-medium text-gray-600"
+                      >Dosage</label
+                    >
+                    <input
+                      type="text"
+                      formControlName="dosage"
+                      class="input-field text-sm"
+                      placeholder="5mg"
+                    />
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-medium text-gray-600"
+                      >Fréquence</label
+                    >
+                    <input
+                      type="text"
+                      formControlName="frequence"
+                      class="input-field text-sm"
+                      placeholder="1 fois/jour"
+                    />
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-medium text-gray-600"
+                      >Durée</label
+                    >
+                    <input
+                      type="text"
+                      formControlName="duree"
+                      class="input-field text-sm"
+                      placeholder="30 jours"
+                    />
+                  </div>
+
+                  <div class="col-span-2 flex gap-2">
+                    <div class="flex-1 space-y-1.5">
+                      <label class="block text-xs font-medium text-gray-600"
+                        >Instructions</label
+                      >
+                      <input
+                        type="text"
+                        formControlName="instructions"
+                        class="input-field text-sm"
+                        placeholder="Prendre le matin..."
+                      />
+                    </div>
+                    @if (medicamentsArray.length > 1) {
+                      <button
+                        type="button"
+                        (click)="removeDrug($index)"
+                        class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg self-end transition-colors"
+                      >
+                        <lucide-icon [img]="Trash2" size="16"></lucide-icon>
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <button
+            type="button"
+            (click)="cancelled.emit()"
+            class="btn-secondary"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            [disabled]="form.invalid || loading()"
+            class="btn-primary flex items-center gap-2"
+          >
+            @if (loading()) {
+              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+            } @else {
+              <lucide-icon [img]="Save" size="16"></lucide-icon>
+            }
+            Créer la prescription
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

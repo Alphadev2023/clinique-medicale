@@ -1,0 +1,224 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div @fadeInUp class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Patients</h1>
+      <p class="text-gray-500 text-sm mt-1">
+        {{ filteredAll.length }} patient(s) trouvé(s)
+      </p>
+    </div>
+    <button
+      (click)="openCreate()"
+      class="btn-primary flex items-center gap-2 text-sm"
+    >
+      <lucide-icon [img]="UserPlus" size="16"></lucide-icon>
+      Nouveau patient
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="relative">
+    <div
+      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+    >
+      <lucide-icon [img]="Search" size="18" color="#9ca3af"></lucide-icon>
+    </div>
+    <input
+      type="text"
+      placeholder="Rechercher par nom, prénom ou email..."
+      class="input-field pl-10 max-w-md"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="onSearch($event)"
+    />
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <svg
+        class="animate-spin h-8 w-8 text-blue-600"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+    </div>
+  }
+
+  <!-- Empty -->
+  @else if (filtered().length === 0) {
+    <div class="card text-center py-16">
+      <lucide-icon
+        [img]="Users"
+        size="48"
+        color="#d1d5db"
+        class="mx-auto mb-3"
+      ></lucide-icon>
+      <p class="text-gray-500 font-medium">Aucun patient trouvé</p>
+      <p class="text-gray-400 text-sm mt-1">Créez votre premier patient</p>
+      <button
+        (click)="openCreate()"
+        class="btn-primary mt-4 inline-flex items-center gap-2 text-sm"
+      >
+        <lucide-icon [img]="UserPlus" size="16"></lucide-icon>
+        Nouveau patient
+      </button>
+    </div>
+  }
+
+  <!-- Table -->
+  @else {
+    <div @fadeInUp class="card p-0 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">
+              Patient
+            </th>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">
+              Contact
+            </th>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">Age</th>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">Genre</th>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">
+              Allergies
+            </th>
+            <th class="text-right py-3 px-4 text-gray-500 font-medium">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (patient of paginatedPatients; track patient.id) {
+            <tr
+              class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              <!-- Patient -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center shrink-0"
+                  >
+                    <span class="text-blue-700 text-xs font-bold">
+                      {{ getInitials(patient.nom, patient.prenom) }}
+                    </span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-900">
+                      {{ patient.prenom }} {{ patient.nom }}
+                    </p>
+                    <p class="text-xs text-gray-400">
+                      {{ patient.adresse || "Adresse non renseignée" }}
+                    </p>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Contact -->
+              <td class="py-3 px-4">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-1 text-gray-600">
+                    <lucide-icon [img]="Mail" size="12"></lucide-icon>
+                    <span class="text-xs">{{ patient.email }}</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-gray-600">
+                    <lucide-icon [img]="Phone" size="12"></lucide-icon>
+                    <span class="text-xs">{{ patient.telephone || "-" }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Age -->
+              <td class="py-3 px-4">
+                <span class="text-gray-900 font-medium">{{
+                  getAge(patient.dateNaissance)
+                }}</span>
+                <span class="text-gray-400 text-xs"> ans</span>
+              </td>
+
+              <!-- Genre -->
+              <td class="py-3 px-4">
+                <span
+                  class="text-xs px-2 py-1 rounded-full"
+                  [class.bg-blue-50]="patient.genre === 'MASCULIN'"
+                  [class.text-blue-700]="patient.genre === 'MASCULIN'"
+                  [class.bg-pink-50]="patient.genre === 'FEMININ'"
+                  [class.text-pink-700]="patient.genre === 'FEMININ'"
+                  [class.bg-gray-50]="patient.genre === 'AUTRE'"
+                  [class.text-gray-700]="patient.genre === 'AUTRE'"
+                >
+                  {{ patient.genre }}
+                </span>
+              </td>
+
+              <!-- Allergies -->
+              <td class="py-3 px-4">
+                @if (patient.allergies && patient.allergies.length) {
+                  <span class="badge-danger"
+                    >{{ patient.allergies.length }} allergie(s)</span
+                  >
+                } @else {
+                  <span class="text-gray-400 text-xs">Aucune</span>
+                }
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3 px-4">
+                <div class="flex items-center justify-end gap-2">
+                  <a
+                    [routerLink]="['/patients', patient.id]"
+                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <lucide-icon [img]="Eye" size="16"></lucide-icon>
+                  </a>
+                  <button
+                    (click)="openEdit(patient)"
+                    class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                  >
+                    <lucide-icon [img]="Edit" size="16"></lucide-icon>
+                  </button>
+                  <button
+                    (click)="supprimer(patient.id)"
+                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <lucide-icon [img]="Trash2" size="16"></lucide-icon>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <app-pagination
+        [totalItems]="filteredAll.length"
+        [pageSize]="pageSize()"
+        [currentPage]="currentPage()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      >
+      </app-pagination>
+    </div>
+  }
+</div>
+
+<!-- Patient Form Modal -->
+@if (showForm()) {
+  <app-patient-form
+    [patient]="editPatient()"
+    (saved)="onSaved()"
+    (cancelled)="closeForm()"
+  >
+  </app-patient-form>
+}

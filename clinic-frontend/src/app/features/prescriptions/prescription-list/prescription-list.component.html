@@ -1,0 +1,137 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Prescriptions</h1>
+      <p class="text-gray-500 text-sm mt-1">
+        {{ filtered.length }} prescription(s)
+      </p>
+    </div>
+    <button
+      (click)="showForm.set(true)"
+      class="btn-primary flex items-center gap-2 text-sm"
+    >
+      <lucide-icon [img]="Plus" size="16"></lucide-icon>
+      Nouvelle prescription
+    </button>
+  </div>
+
+  <!-- Filtre patient -->
+  <div class="flex gap-3">
+    <select
+      class="input-field max-w-xs"
+      [ngModel]="filterPatient()"
+      (ngModelChange)="filterPatient.set($event)"
+    >
+      <option value="">Tous les patients</option>
+      @for (p of patients(); track p.id) {
+        <option [value]="p.id">{{ p.prenom }} {{ p.nom }}</option>
+      }
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <svg
+        class="animate-spin h-8 w-8 text-blue-600"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+    </div>
+  } @else if (filtered.length === 0) {
+    <div class="card text-center py-16">
+      <lucide-icon
+        [img]="FileText"
+        size="48"
+        color="#d1d5db"
+        class="mx-auto mb-3"
+      ></lucide-icon>
+      <p class="text-gray-500 font-medium">Aucune prescription</p>
+      <button
+        (click)="showForm.set(true)"
+        class="btn-primary mt-4 inline-flex items-center gap-2 text-sm"
+      >
+        <lucide-icon [img]="Plus" size="16"></lucide-icon>
+        Nouvelle prescription
+      </button>
+    </div>
+  } @else {
+    <div @fadeInUp class="space-y-4">
+      <div [@listAnimation]="filtered.length" class="space-y-4">
+        @for (p of filtered; track p.id) {
+          <div @fadeInUp class="card">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <h3 class="font-semibold text-gray-900">
+                    {{ getPatientName(p.patientId) }}
+                  </h3>
+                  <span [class]="getStatusClass(p.status)">{{ p.status }}</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-3">
+                  {{ p.diagnostic || "Pas de diagnostic renseigné" }}
+                </p>
+                <div class="flex flex-wrap gap-4 text-xs text-gray-500">
+                  <span>Prescrit le {{ p.datePrescription }}</span>
+                  <span>Expire le {{ p.dateExpiration }}</span>
+                  <span>{{ p.medicaments.length }} médicament(s)</span>
+                </div>
+                <!-- Médicaments -->
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  @for (drug of p.medicaments; track $index) {
+                    <div class="bg-blue-50 rounded-lg p-2 text-xs">
+                      <p class="font-medium text-blue-900">
+                        {{ drug.medicament }} — {{ drug.dosage }}
+                      </p>
+                      <p class="text-blue-600 mt-0.5">
+                        {{ drug.frequence }} — {{ drug.duree }}
+                      </p>
+                      @if (drug.instructions) {
+                        <p class="text-gray-500 mt-0.5 italic">
+                          {{ drug.instructions }}
+                        </p>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+              @if (p.status === "ACTIVE") {
+                <button
+                  (click)="annuler(p.id)"
+                  class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg ml-4"
+                >
+                  <lucide-icon [img]="X" size="16"></lucide-icon>
+                </button>
+              }
+            </div>
+            <button
+              (click)="downloadPdf(p.id)"
+              class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+              title="Télécharger PDF"
+            >
+              <lucide-icon [img]="FileDown" size="16"></lucide-icon>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+@if (showForm()) {
+  <app-prescription-form (saved)="onSaved()" (cancelled)="showForm.set(false)">
+  </app-prescription-form>
+}

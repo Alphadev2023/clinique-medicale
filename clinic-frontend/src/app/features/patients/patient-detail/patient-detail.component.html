@@ -1,0 +1,202 @@
+<div class="space-y-6">
+  <!-- Back -->
+  <a
+    routerLink="/patients"
+    class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+  >
+    <lucide-icon [img]="ArrowLeft" size="16"></lucide-icon>
+    Retour à la liste
+  </a>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <svg
+        class="animate-spin h-8 w-8 text-blue-600"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+    </div>
+  } @else if (patient()) {
+    <!-- Header patient -->
+    <div class="card">
+      <div class="flex items-start gap-6">
+        <div
+          class="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center shrink-0"
+        >
+          <span class="text-blue-700 text-2xl font-bold">
+            {{ patient()!.prenom.charAt(0) }}{{ patient()!.nom.charAt(0) }}
+          </span>
+        </div>
+        <div class="flex-1">
+          <h1 class="text-2xl font-bold text-gray-900">
+            {{ patient()!.prenom }} {{ patient()!.nom }}
+          </h1>
+          <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-600">
+            <div class="flex items-center gap-1.5">
+              <lucide-icon [img]="Mail" size="14"></lucide-icon>
+              {{ patient()!.email }}
+            </div>
+            <div class="flex items-center gap-1.5">
+              <lucide-icon [img]="Phone" size="14"></lucide-icon>
+              {{ patient()!.telephone || "Non renseigné" }}
+            </div>
+            <div class="flex items-center gap-1.5">
+              <lucide-icon [img]="Calendar" size="14"></lucide-icon>
+              {{ getAge(patient()!.dateNaissance) }} ans
+            </div>
+            <div class="flex items-center gap-1.5">
+              <lucide-icon [img]="MapPin" size="14"></lucide-icon>
+              {{ patient()!.adresse || "Adresse non renseignée" }}
+            </div>
+          </div>
+        </div>
+        <div>
+          <span
+            class="text-xs px-3 py-1.5 rounded-full font-medium"
+            [class.bg-blue-50]="patient()!.genre === 'MASCULIN'"
+            [class.text-blue-700]="patient()!.genre === 'MASCULIN'"
+            [class.bg-pink-50]="patient()!.genre === 'FEMININ'"
+            [class.text-pink-700]="patient()!.genre === 'FEMININ'"
+          >
+            {{ patient()!.genre }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Historique médical -->
+      <div class="card">
+        <div class="flex items-center gap-2 mb-4">
+          <lucide-icon [img]="FileText" size="18" color="#2563eb"></lucide-icon>
+          <h2 class="text-lg font-semibold text-gray-900">
+            Historique médical
+          </h2>
+        </div>
+        @if (patient()!.historiqueMedical) {
+          <div class="space-y-4 text-sm">
+            @if (patient()!.historiqueMedical.antecedents) {
+              <div>
+                <p class="font-medium text-gray-700 mb-1">Antécédents</p>
+                <p class="text-gray-600 bg-gray-50 rounded-lg p-3">
+                  {{ patient()!.historiqueMedical.antecedents }}
+                </p>
+              </div>
+            }
+            @if (patient()!.historiqueMedical.maladiesChroniques) {
+              <div>
+                <p class="font-medium text-gray-700 mb-1">
+                  Maladies chroniques
+                </p>
+                <p class="text-gray-600 bg-gray-50 rounded-lg p-3">
+                  {{ patient()!.historiqueMedical.maladiesChroniques }}
+                </p>
+              </div>
+            }
+            @if (patient()!.historiqueMedical.chirurgies) {
+              <div>
+                <p class="font-medium text-gray-700 mb-1">Chirurgies</p>
+                <p class="text-gray-600 bg-gray-50 rounded-lg p-3">
+                  {{ patient()!.historiqueMedical.chirurgies }}
+                </p>
+              </div>
+            }
+            @if (patient()!.historiqueMedical.traitementsEnCours) {
+              <div>
+                <p class="font-medium text-gray-700 mb-1">
+                  Traitements en cours
+                </p>
+                <p class="text-gray-600 bg-gray-50 rounded-lg p-3">
+                  {{ patient()!.historiqueMedical.traitementsEnCours }}
+                </p>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-gray-400 text-sm">
+            Aucun historique médical renseigné
+          </p>
+        }
+      </div>
+
+      <!-- Allergies -->
+      <div class="card">
+        <div class="flex items-center gap-2 mb-4">
+          <lucide-icon
+            [img]="AlertTriangle"
+            size="18"
+            color="#dc2626"
+          ></lucide-icon>
+          <h2 class="text-lg font-semibold text-gray-900">Allergies</h2>
+        </div>
+        @if (patient()!.allergies && patient()!.allergies.length) {
+          <div class="space-y-3">
+            @for (allergy of patient()!.allergies; track $index) {
+              <div
+                class="flex items-start justify-between p-3 bg-red-50 rounded-lg border border-red-100"
+              >
+                <div>
+                  <p class="font-medium text-gray-900 text-sm">
+                    {{ allergy.nom }}
+                  </p>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    {{ allergy.reaction }}
+                  </p>
+                </div>
+                <span [class]="getSeveriteClass(allergy.severite)">{{
+                  allergy.severite
+                }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-gray-400 text-sm">Aucune allergie connue</p>
+        }
+      </div>
+
+      <!-- Sécurité sociale -->
+      <div class="card">
+        <div class="flex items-center gap-2 mb-4">
+          <lucide-icon [img]="Shield" size="18" color="#059669"></lucide-icon>
+          <h2 class="text-lg font-semibold text-gray-900">
+            Informations administratives
+          </h2>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-500">N° Sécurité sociale</span>
+            <span class="font-mono font-medium text-gray-900">
+              {{ patient()!.numeroSecuriteSociale || "Non renseigné" }}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Date de naissance</span>
+            <span class="font-medium text-gray-900">{{
+              patient()!.dateNaissance
+            }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Créé le</span>
+            <span class="font-medium text-gray-900">
+              {{ patient()!.createdAt | date: "dd/MM/yyyy" }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

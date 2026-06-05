@@ -1,0 +1,423 @@
+<div class="h-[calc(100vh-8rem)] flex gap-4">
+  <!-- Sidebar utilisateurs -->
+  <div
+    class="w-72 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden shrink-0"
+  >
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-100">
+      <button
+        (click)="activeTab.set('chat')"
+        class="flex-1 py-3.5 text-sm font-medium transition-colors relative"
+        [class.text-blue-600]="activeTab() === 'chat'"
+        [class.border-b-2]="activeTab() === 'chat'"
+        [class.border-blue-600]="activeTab() === 'chat'"
+        [class.text-gray-400]="activeTab() !== 'chat'"
+      >
+        <lucide-icon
+          [img]="MessageSquare"
+          size="14"
+          class="inline mr-1.5"
+        ></lucide-icon>
+        Messages
+      </button>
+      <button
+        (click)="activeTab.set('notifications')"
+        class="flex-1 py-3.5 text-sm font-medium transition-colors relative"
+        [class.text-blue-600]="activeTab() === 'notifications'"
+        [class.border-b-2]="activeTab() === 'notifications'"
+        [class.border-blue-600]="activeTab() === 'notifications'"
+        [class.text-gray-400]="activeTab() !== 'notifications'"
+      >
+        <lucide-icon [img]="Bell" size="14" class="inline mr-1.5"></lucide-icon>
+        Notifs
+        @if (notifications().length > 0) {
+          <span
+            class="absolute top-2 right-4 min-w-[18px] h-[18px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1 font-bold"
+          >
+            {{ notifications().length > 99 ? "99+" : notifications().length }}
+          </span>
+        }
+      </button>
+    </div>
+
+    @if (activeTab() === "chat") {
+      <!-- Titre -->
+      <div class="px-4 py-3 border-b border-gray-50">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          Équipe médicale
+        </p>
+      </div>
+
+      <!-- Liste utilisateurs -->
+      <div class="flex-1 overflow-y-auto p-2">
+        @for (user of users(); track user.id) {
+          <button
+            (click)="selectUser(user)"
+            class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all text-left mb-1"
+            [class.bg-blue-50]="selectedUser()?.id === user.id"
+            [class.border]="selectedUser()?.id === user.id"
+            [class.border-blue-100]="selectedUser()?.id === user.id"
+          >
+            <div class="relative shrink-0">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm"
+                [class.bg-blue-100]="user.role === 'ADMIN'"
+                [class.text-blue-700]="user.role === 'ADMIN'"
+                [class.bg-green-100]="user.role === 'MEDECIN'"
+                [class.text-green-700]="user.role === 'MEDECIN'"
+                [class.bg-purple-100]="user.role === 'SECRETAIRE'"
+                [class.text-purple-700]="user.role === 'SECRETAIRE'"
+              >
+                {{ user.prenom.charAt(0) }}{{ user.nom.charAt(0) }}
+              </div>
+              <!-- Badge non lus -->
+              @if (getUnreadCount(user.id) > 0) {
+                <span
+                  class="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1 font-bold"
+                >
+                  {{ getUnreadCount(user.id) }}
+                </span>
+              }
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-gray-900 truncate">
+                {{ user.prenom }} {{ user.nom }}
+              </p>
+              <p class="text-xs text-gray-400">{{ user.role }}</p>
+            </div>
+          </button>
+        }
+      </div>
+    } @else {
+      <!-- Notifications -->
+      <div class="flex-1 overflow-y-auto p-3">
+        @if (notifications().length > 0) {
+          <div class="flex items-center justify-between mb-3">
+            <p
+              class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+            >
+              {{ notifications().length }} non lue(s)
+            </p>
+            <button
+              (click)="marquerTousLus()"
+              class="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium"
+            >
+              <lucide-icon [img]="Check" size="12"></lucide-icon>
+              Tout lire
+            </button>
+          </div>
+        }
+        @for (notif of notifications(); track notif.id) {
+          <div class="p-3 mb-2 bg-blue-50 rounded-xl border border-blue-100">
+            <div class="flex items-start gap-2">
+              <div
+                class="w-6 h-6 bg-blue-200 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+              >
+                <lucide-icon
+                  [img]="Bell"
+                  size="12"
+                  color="#2563eb"
+                ></lucide-icon>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-blue-900">
+                  {{ notif.expediteurNom }}
+                </p>
+                <p class="text-xs text-gray-600 mt-0.5 break-words">
+                  {{ notif.contenu }}
+                </p>
+                <p class="text-xs text-gray-400 mt-1">
+                  {{ formatTime(notif.createdAt) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+        @if (notifications().length === 0) {
+          <div class="text-center py-12">
+            <lucide-icon
+              [img]="Bell"
+              size="32"
+              color="#d1d5db"
+              class="mx-auto mb-2"
+            ></lucide-icon>
+            <p class="text-sm text-gray-400">Aucune notification</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Zone chat -->
+  <div
+    class="flex-1 rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden"
+    style="
+      background-image:
+        radial-gradient(circle, #e8f4fd 1px, transparent 1px),
+        radial-gradient(circle, #e8f4fd 1px, transparent 1px);
+      background-size: 30px 30px;
+      background-color: #f8fbff;
+    "
+  >
+    @if (!selectedUser()) {
+      <div
+        class="flex-1 flex flex-col items-center justify-center text-gray-400"
+      >
+        <div
+          class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4"
+        >
+          <lucide-icon
+            [img]="MessageSquare"
+            size="36"
+            color="#3b82f6"
+          ></lucide-icon>
+        </div>
+        <p class="text-base font-semibold text-gray-600">
+          Sélectionnez une conversation
+        </p>
+        <p class="text-sm mt-1 text-gray-400">
+          Choisissez un membre de l'équipe
+        </p>
+      </div>
+    } @else {
+      <!-- Header conversation -->
+      <div
+        class="flex items-center gap-3 px-5 py-4 bg-white border-b border-gray-100"
+      >
+        <div
+          class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0"
+          [class.bg-green-100]="selectedUser()!.role === 'MEDECIN'"
+          [class.text-green-700]="selectedUser()!.role === 'MEDECIN'"
+          [class.bg-purple-100]="selectedUser()!.role === 'SECRETAIRE'"
+          [class.text-purple-700]="selectedUser()!.role === 'SECRETAIRE'"
+          [class.bg-blue-100]="selectedUser()!.role === 'ADMIN'"
+          [class.text-blue-700]="selectedUser()!.role === 'ADMIN'"
+        >
+          {{ selectedUser()!.prenom.charAt(0)
+          }}{{ selectedUser()!.nom.charAt(0) }}
+        </div>
+        <div class="flex-1">
+          <p class="font-semibold text-gray-900">
+            {{ selectedUser()!.prenom }} {{ selectedUser()!.nom }}
+          </p>
+          <div class="flex items-center gap-1.5">
+            <div
+              class="w-1.5 h-1.5 rounded-full"
+              [class.bg-green-500]="websocketService.connected()"
+              [class.bg-gray-300]="!websocketService.connected()"
+            ></div>
+            <span class="text-xs text-gray-500">
+              {{ websocketService.connected() ? "En ligne" : "Hors ligne" }}
+            </span>
+            <span class="text-xs text-gray-300 mx-1">•</span>
+            <span class="text-xs text-gray-400">{{
+              selectedUser()!.role
+            }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div
+        #messagesContainer
+        class="flex-1 overflow-y-auto px-5 py-4 space-y-3"
+      >
+        @if (loading()) {
+          <div class="flex justify-center py-8">
+            <svg
+              class="animate-spin h-6 w-6 text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+          </div>
+        }
+        @for (msg of messages(); track msg.id) {
+          <div
+            class="flex"
+            [class.justify-end]="isMyMessage(msg)"
+            [class.justify-start]="!isMyMessage(msg)"
+          >
+            <div class="max-w-sm lg:max-w-md">
+              @if (!isMyMessage(msg)) {
+                <p class="text-xs text-gray-500 mb-1 px-1 font-medium">
+                  {{ msg.expediteurNom }}
+                </p>
+              }
+              <div
+                class="px-4 py-2.5 rounded-2xl text-sm shadow-sm"
+                [class.bg-blue-600]="isMyMessage(msg)"
+                [class.text-white]="isMyMessage(msg)"
+                [class.rounded-br-none]="isMyMessage(msg)"
+                [class.bg-white]="!isMyMessage(msg)"
+                [class.text-gray-800]="!isMyMessage(msg)"
+                [class.rounded-bl-none]="!isMyMessage(msg)"
+                [class.border]="!isMyMessage(msg)"
+                [class.border-gray-100]="!isMyMessage(msg)"
+              >
+                {{ msg.contenu }}
+              </div>
+              <div
+                class="px-4 py-2.5 rounded-2xl text-sm shadow-sm"
+                [class.bg-blue-600]="isMyMessage(msg)"
+                [class.text-white]="isMyMessage(msg)"
+                [class.rounded-br-none]="isMyMessage(msg)"
+                [class.bg-white]="!isMyMessage(msg)"
+                [class.text-gray-800]="!isMyMessage(msg)"
+                [class.rounded-bl-none]="!isMyMessage(msg)"
+                [class.border]="!isMyMessage(msg)"
+                [class.border-gray-100]="!isMyMessage(msg)"
+              >
+                @if (msg.contenu && msg.contenu.trim()) {
+                  <p>{{ msg.contenu }}</p>
+                }
+                @if (msg.imageUrl) {
+                  <img
+                    [src]="getImageUrl(msg.imageUrl)"
+                    class="mt-2 rounded-xl max-w-xs max-h-60 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    (click)="openImage(msg.imageUrl)"
+                    alt="Image partagée"
+                  />
+                }
+              </div>
+              <p
+                class="text-xs text-gray-400 mt-1 px-1"
+                [class.text-right]="isMyMessage(msg)"
+              >
+                {{ formatTime(msg.createdAt) }}
+              </p>
+            </div>
+          </div>
+        }
+        @if (messages().length === 0 && !loading()) {
+          <div class="text-center py-12">
+            <div
+              class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3"
+            >
+              <lucide-icon
+                [img]="MessageSquare"
+                size="28"
+                color="#3b82f6"
+              ></lucide-icon>
+            </div>
+            <p class="text-sm font-medium text-gray-600">
+              Commencez la conversation
+            </p>
+            <p class="text-xs text-gray-400 mt-1">
+              Envoyez un message à {{ selectedUser()!.prenom }}
+            </p>
+          </div>
+        }
+      </div>
+
+      <!-- Input -->
+      <div class="px-5 py-4 bg-white border-t border-gray-100">
+        <!-- Prévisualisation image -->
+        @if (imagePreview()) {
+          <div
+            class="mb-3 flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200"
+          >
+            <img
+              [src]="imagePreview()!"
+              class="w-16 h-16 rounded-lg object-cover shrink-0"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-medium text-gray-700">
+                Image prête à envoyer
+              </p>
+              @if (uploadingImage()) {
+                <p class="text-xs text-blue-500 mt-0.5 flex items-center gap-1">
+                  <svg
+                    class="animate-spin h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    />
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Upload en cours...
+                </p>
+              } @else {
+                <p class="text-xs text-green-500 mt-0.5">Prête à envoyer</p>
+              }
+            </div>
+            <button
+              (click)="cancelImage()"
+              class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <lucide-icon [img]="X" size="14"></lucide-icon>
+            </button>
+          </div>
+        }
+
+        <div class="flex gap-3 items-end">
+          <!-- Input fichier caché -->
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            class="hidden"
+            (change)="onFileSelected($event)"
+          />
+
+          <!-- Bouton image -->
+          <button
+            (click)="openFileSelector()"
+            [disabled]="uploadingImage()"
+            class="p-3 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0 disabled:opacity-50"
+            title="Envoyer une image"
+          >
+            <lucide-icon [img]="ImageIcon" size="20"></lucide-icon>
+          </button>
+
+          <textarea
+            class="flex-1 input-field resize-none text-sm py-3"
+            rows="2"
+            placeholder="Écrire un message... (Entrée pour envoyer)"
+            [ngModel]="newMessage()"
+            (ngModelChange)="newMessage.set($event)"
+            (keydown)="onEnter($event)"
+          >
+          </textarea>
+
+          <button
+            (click)="sendMessage()"
+            [disabled]="
+              (!newMessage().trim() && !pendingImageUrl()) ||
+              !selectedUser() ||
+              uploadingImage()
+            "
+            class="btn-primary px-5 py-3 flex items-center gap-2 self-end rounded-xl disabled:opacity-50"
+          >
+            <lucide-icon [img]="Send" size="16"></lucide-icon>
+            Envoyer
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

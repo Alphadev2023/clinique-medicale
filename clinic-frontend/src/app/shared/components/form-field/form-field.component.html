@@ -1,0 +1,52 @@
+<div class="space-y-1.5">
+  @if (label) {
+    <label
+      class="block text-sm font-medium"
+      [class.text-gray-700]="!isInvalid && !isValid"
+      [class.text-red-600]="isInvalid"
+      [class.text-green-600]="isValid"
+    >
+      {{ label }}
+      @if (required) {
+        <span class="text-red-500 ml-0.5">*</span>
+      }
+    </label>
+  }
+
+  <div class="relative">
+    <ng-content></ng-content>
+
+    @if (isValid) {
+      <div
+        class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
+      >
+        <lucide-icon
+          [img]="CheckCircle"
+          size="16"
+          color="#059669"
+        ></lucide-icon>
+      </div>
+    }
+    @if (isInvalid) {
+      <div
+        class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
+      >
+        <lucide-icon
+          [img]="AlertCircle"
+          size="16"
+          color="#dc2626"
+        ></lucide-icon>
+      </div>
+    }
+  </div>
+
+  @if (isInvalid) {
+    <p class="text-xs text-red-600 flex items-center gap-1 animate-fade-in">
+      {{ errorMessage }}
+    </p>
+  }
+
+  @if (hint && !isInvalid) {
+    <p class="text-xs text-gray-400">{{ hint }}</p>
+  }
+</div>

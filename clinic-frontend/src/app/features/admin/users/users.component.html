@@ -1,0 +1,335 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Gestion des utilisateurs</h1>
+      <p class="text-gray-500 text-sm mt-1">
+        {{ allUsers().length }} utilisateur(s) au total
+      </p>
+    </div>
+    <button
+      (click)="showForm.set(true)"
+      class="btn-primary flex items-center gap-2 text-sm"
+    >
+      <lucide-icon [img]="UserPlus" size="16"></lucide-icon>
+      Nouvel utilisateur
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-4">
+    <button
+      (click)="filterRole.set('TOUS')"
+      class="card text-left transition-all"
+      [class.ring-2]="filterRole() === 'TOUS'"
+      [class.ring-blue-500]="filterRole() === 'TOUS'"
+    >
+      <p class="text-2xl font-bold text-gray-900">{{ allUsers().length }}</p>
+      <p class="text-xs text-gray-500 mt-1">Total</p>
+    </button>
+    <button
+      (click)="filterRole.set('MEDECIN')"
+      class="card text-left transition-all"
+      [class.ring-2]="filterRole() === 'MEDECIN'"
+      [class.ring-green-500]="filterRole() === 'MEDECIN'"
+    >
+      <p class="text-2xl font-bold text-green-600">
+        {{ countByRole("MEDECIN") }}
+      </p>
+      <p class="text-xs text-gray-500 mt-1">Médecins</p>
+    </button>
+    <button
+      (click)="filterRole.set('SECRETAIRE')"
+      class="card text-left transition-all"
+      [class.ring-2]="filterRole() === 'SECRETAIRE'"
+      [class.ring-purple-500]="filterRole() === 'SECRETAIRE'"
+    >
+      <p class="text-2xl font-bold text-purple-600">
+        {{ countByRole("SECRETAIRE") }}
+      </p>
+      <p class="text-xs text-gray-500 mt-1">Secrétaires</p>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <svg
+        class="animate-spin h-8 w-8 text-blue-600"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+    </div>
+  } @else {
+    <!-- Table -->
+    <div class="card p-0 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">
+              Utilisateur
+            </th>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">Email</th>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">Rôle</th>
+            <th class="text-left py-3 px-4 text-gray-500 font-medium">
+              Statut
+            </th>
+            <th class="text-right py-3 px-4 text-gray-500 font-medium">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filtered; track user.id) {
+            <tr
+              class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              <!-- Utilisateur -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    [class.bg-blue-100]="user.role === 'ADMIN'"
+                    [class.bg-green-100]="user.role === 'MEDECIN'"
+                    [class.bg-purple-100]="user.role === 'SECRETAIRE'"
+                  >
+                    <span
+                      class="text-xs font-bold"
+                      [class.text-blue-700]="user.role === 'ADMIN'"
+                      [class.text-green-700]="user.role === 'MEDECIN'"
+                      [class.text-purple-700]="user.role === 'SECRETAIRE'"
+                    >
+                      {{ getInitials(user.nom, user.prenom) }}
+                    </span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-900">
+                      {{ user.prenom }} {{ user.nom }}
+                    </p>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Email -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-1 text-gray-600">
+                  <lucide-icon [img]="Mail" size="12"></lucide-icon>
+                  <span class="text-xs">{{ user.email }}</span>
+                </div>
+              </td>
+
+              <!-- Rôle -->
+              <td class="py-3 px-4">
+                <span
+                  class="text-xs px-2 py-1 rounded-full font-medium"
+                  [class]="getRoleClass(user.role)"
+                >
+                  {{ user.role }}
+                </span>
+              </td>
+
+              <!-- Statut -->
+              <td class="py-3 px-4">
+                @if (user.actif) {
+                  <span class="badge-success">Actif</span>
+                } @else {
+                  <span class="badge-danger">Inactif</span>
+                }
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3 px-4">
+                <div class="flex items-center justify-end gap-2">
+                  @if (user.role !== "ADMIN") {
+                    <button
+                      (click)="toggleActif(user)"
+                      class="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-colors"
+                      [class.bg-red-50]="user.actif"
+                      [class.text-red-600]="user.actif"
+                      [class.hover:bg-red-100]="user.actif"
+                      [class.bg-green-50]="!user.actif"
+                      [class.text-green-600]="!user.actif"
+                      [class.hover:bg-green-100]="!user.actif"
+                    >
+                      <lucide-icon
+                        [img]="user.actif ? ToggleRight : ToggleLeft"
+                        size="14"
+                      ></lucide-icon>
+                      {{ user.actif ? "Désactiver" : "Activer" }}
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal création -->
+@if (showForm()) {
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+  >
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div
+        class="flex items-center justify-between p-6 border-b border-gray-200"
+      >
+        <h2 class="text-lg font-semibold text-gray-900">Nouvel utilisateur</h2>
+        <button
+          (click)="showForm.set(false)"
+          class="p-2 text-gray-400 hover:bg-gray-100 rounded-lg"
+        >
+          <lucide-icon [img]="X" size="20"></lucide-icon>
+        </button>
+      </div>
+
+      <form
+        [formGroup]="form"
+        (ngSubmit)="creerUtilisateur()"
+        class="p-6 space-y-4"
+      >
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Prénom *</label
+            >
+            <input
+              type="text"
+              formControlName="prenom"
+              class="input-field"
+              placeholder="Pierre"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Nom *</label
+            >
+            <input
+              type="text"
+              formControlName="nom"
+              class="input-field"
+              placeholder="Bernard"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Email *</label
+          >
+          <div class="relative">
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+            >
+              <lucide-icon [img]="Mail" size="16" color="#9ca3af"></lucide-icon>
+            </div>
+            <input
+              type="email"
+              formControlName="email"
+              class="input-field pl-9"
+              placeholder="pierre&#64;clinique.com"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Mot de passe *</label
+          >
+          <div class="relative">
+            <input
+              [type]="showPass() ? 'text' : 'password'"
+              formControlName="password"
+              class="input-field pr-10"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              (click)="toggleShowPass()"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              <lucide-icon
+                [img]="showPass() ? EyeOff : Eye"
+                size="16"
+              ></lucide-icon>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Rôle *</label
+          >
+          <div class="relative">
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+            >
+              <lucide-icon
+                [img]="Shield"
+                size="16"
+                color="#9ca3af"
+              ></lucide-icon>
+            </div>
+            <select formControlName="role" class="input-field pl-9">
+              <option value="MEDECIN">Médecin</option>
+              <option value="SECRETAIRE">Secrétaire</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            (click)="showForm.set(false)"
+            class="btn-secondary"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            [disabled]="form.invalid || formLoading()"
+            class="btn-primary flex items-center gap-2"
+          >
+            @if (formLoading()) {
+              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+            } @else {
+              <lucide-icon [img]="Save" size="16"></lucide-icon>
+            }
+            Créer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

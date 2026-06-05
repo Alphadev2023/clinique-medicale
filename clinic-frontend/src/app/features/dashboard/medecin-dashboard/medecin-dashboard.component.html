@@ -1,0 +1,192 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">
+        Bonjour Dr. {{ authService.userName() }}
+      </h1>
+      <p class="text-gray-500 text-sm mt-1">Voici votre tableau de bord</p>
+    </div>
+    <div class="flex gap-3">
+      <a
+        routerLink="/prescriptions"
+        class="btn-secondary flex items-center gap-2 text-sm"
+      >
+        <lucide-icon [img]="FilePlus" size="16"></lucide-icon>
+        Nouvelle prescription
+      </a>
+      <a
+        routerLink="/appointments"
+        class="btn-primary flex items-center gap-2 text-sm"
+      >
+        <lucide-icon [img]="CalendarPlus" size="16"></lucide-icon>
+        Nouveau RDV
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div class="card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">RDV aujourd'hui</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1">
+            {{ stats().rdvAujourdhui }}
+          </p>
+        </div>
+        <div
+          class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center"
+        >
+          <lucide-icon [img]="Calendar" size="24" color="#2563eb"></lucide-icon>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 mt-3">
+        {{ stats().rdvSemaine }} cette semaine
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Patients suivis</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1">
+            {{ stats().totalPatients }}
+          </p>
+        </div>
+        <div
+          class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center"
+        >
+          <lucide-icon [img]="Users" size="24" color="#059669"></lucide-icon>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 mt-3">Via prescriptions</p>
+    </div>
+
+    <div class="card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Prescriptions actives</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1">
+            {{ stats().prescriptionsActives }}
+          </p>
+        </div>
+        <div
+          class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center"
+        >
+          <lucide-icon [img]="FileText" size="24" color="#7c3aed"></lucide-icon>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 mt-3">En cours de traitement</p>
+    </div>
+
+    <div class="card flex items-center gap-4">
+      <div
+        class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center"
+      >
+        <lucide-icon [img]="Clock" size="20" color="#2563eb"></lucide-icon>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">Planifiés</p>
+        <p class="text-xl font-bold text-gray-900">
+          {{ stats().rdvPlanifies }}
+        </p>
+      </div>
+    </div>
+
+    <div class="card flex items-center gap-4">
+      <div
+        class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center"
+      >
+        <lucide-icon
+          [img]="CheckCircle"
+          size="20"
+          color="#059669"
+        ></lucide-icon>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">Terminés</p>
+        <p class="text-xl font-bold text-gray-900">{{ stats().rdvTermines }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prochains RDV -->
+  <div class="card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-900">Prochains rendez-vous</h2>
+      <a
+        routerLink="/appointments"
+        class="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+      >
+        Voir tout
+        <lucide-icon [img]="ArrowRight" size="14"></lucide-icon>
+      </a>
+    </div>
+
+    @if (loading()) {
+      <div class="flex justify-center py-8">
+        <svg
+          class="animate-spin h-6 w-6 text-blue-600"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+      </div>
+    } @else if (prochainRdv().length === 0) {
+      <div class="text-center py-8 text-gray-400">
+        <lucide-icon
+          [img]="Calendar"
+          size="40"
+          class="mx-auto mb-2 opacity-40"
+        ></lucide-icon>
+        <p class="text-sm">Aucun rendez-vous à venir</p>
+      </div>
+    } @else {
+      <div class="space-y-3">
+        @for (rdv of prochainRdv(); track rdv.id) {
+          <div
+            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0"
+              >
+                <lucide-icon
+                  [img]="Calendar"
+                  size="18"
+                  color="#2563eb"
+                ></lucide-icon>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-900">
+                  {{ rdv.motif || "Consultation" }}
+                </p>
+                <p class="text-xs text-gray-500">{{ formatDate(rdv.debut) }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500">{{ rdv.salle || "-" }}</span>
+              <span [class]="getStatusClass(rdv.status)">{{
+                getStatusLabel(rdv.status)
+              }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

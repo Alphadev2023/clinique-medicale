@@ -1,0 +1,44 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-backend:
+    name: Lint & Build Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Build without tests
+        working-directory: clinic-api
+        run: mvn clean compile -B
+
+  lint-frontend:
+    name: Lint & Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: clinic-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: clinic-frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Build production
+        working-directory: clinic-frontend
+        run: npm run build

@@ -1,0 +1,105 @@
+<aside
+  class="h-screen bg-white border-r border-gray-100 flex flex-col transition-all duration-300 shadow-sm"
+  [class.w-64]="!collapsed()"
+  [class.w-16]="collapsed()"
+>
+  <!-- Logo -->
+  <div
+    class="flex items-center justify-between px-4 h-16 border-b border-gray-100"
+  >
+    @if (!collapsed()) {
+      <div class="flex items-center gap-2.5">
+        <div
+          class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-sm"
+        >
+          <lucide-icon
+            [img]="Stethoscope"
+            color="white"
+            size="16"
+          ></lucide-icon>
+        </div>
+        <div>
+          <span class="font-bold text-gray-900 text-sm">Clinique</span>
+          <p class="text-xs text-gray-400 leading-none">Médicale</p>
+        </div>
+      </div>
+    }
+    <button
+      (click)="toggle()"
+      class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+    >
+      <lucide-icon [img]="collapsed() ? Menu : X" size="18"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- User info -->
+  @if (!collapsed()) {
+    <div class="mx-3 my-3 p-3 bg-gray-50 rounded-xl">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+        >
+          <span class="text-white text-xs font-bold">
+            {{ authService.userName().charAt(0).toUpperCase() }}
+          </span>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-gray-900 truncate">
+            {{ authService.userName() }}
+          </p>
+          <span
+            class="text-xs px-1.5 py-0.5 rounded-md font-medium"
+            [class.bg-blue-100]="authService.userRole() === 'ADMIN'"
+            [class.text-blue-700]="authService.userRole() === 'ADMIN'"
+            [class.bg-green-100]="authService.userRole() === 'MEDECIN'"
+            [class.text-green-700]="authService.userRole() === 'MEDECIN'"
+            [class.bg-purple-100]="authService.userRole() === 'SECRETAIRE'"
+            [class.text-purple-700]="authService.userRole() === 'SECRETAIRE'"
+          >
+            {{ authService.userRole() }}
+          </span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Nav -->
+  <nav class="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+    @for (item of visibleItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="bg-blue-50 text-blue-700 font-semibold"
+        [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-150 group"
+        [class.justify-center]="collapsed()"
+      >
+        <lucide-icon
+          [img]="item.icon"
+          size="18"
+          class="shrink-0 transition-transform group-hover:scale-110"
+        ></lucide-icon>
+        @if (!collapsed()) {
+          <span class="text-sm">{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- Logout -->
+  <div class="px-3 py-3 border-t border-gray-100">
+    <button
+      (click)="logout()"
+      class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-150 w-full group"
+      [class.justify-center]="collapsed()"
+    >
+      <lucide-icon
+        [img]="LogOut"
+        size="18"
+        class="shrink-0 group-hover:translate-x-0.5 transition-transform"
+      ></lucide-icon>
+      @if (!collapsed()) {
+        <span class="text-sm font-medium">Déconnexion</span>
+      }
+    </button>
+  </div>
+</aside>

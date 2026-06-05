@@ -1,0 +1,279 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Facturation</h1>
+      <p class="text-gray-500 text-sm mt-1">
+        {{ filteredAll.length }} facture(s)
+      </p>
+    </div>
+    <button
+      (click)="showForm.set(true)"
+      class="btn-primary flex items-center gap-2 text-sm"
+    >
+      <lucide-icon [img]="Plus" size="16"></lucide-icon>
+      Nouvelle facture
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="card">
+      <p class="text-2xl font-bold text-gray-900">
+        {{ formatMontant(totalRevenus()) }}
+      </p>
+      <p class="text-xs text-gray-500 mt-1">Revenus encaissés</p>
+    </div>
+    <button
+      (click)="filterStatus.set('EN_ATTENTE')"
+      class="card text-left"
+      [class.ring-2]="filterStatus() === 'EN_ATTENTE'"
+      [class.ring-amber-400]="filterStatus() === 'EN_ATTENTE'"
+    >
+      <p class="text-2xl font-bold text-amber-600">
+        {{ countByStatus("EN_ATTENTE") }}
+      </p>
+      <p class="text-xs text-gray-500 mt-1">En attente</p>
+    </button>
+    <button
+      (click)="filterStatus.set('PAYEE')"
+      class="card text-left"
+      [class.ring-2]="filterStatus() === 'PAYEE'"
+      [class.ring-green-400]="filterStatus() === 'PAYEE'"
+    >
+      <p class="text-2xl font-bold text-green-600">
+        {{ countByStatus("PAYEE") }}
+      </p>
+      <p class="text-xs text-gray-500 mt-1">Payées</p>
+    </button>
+    <button
+      (click)="filterStatus.set('TOUS')"
+      class="card text-left"
+      [class.ring-2]="filterStatus() === 'TOUS'"
+      [class.ring-blue-400]="filterStatus() === 'TOUS'"
+    >
+      <p class="text-2xl font-bold text-blue-600">{{ invoices().length }}</p>
+      <p class="text-xs text-gray-500 mt-1">Total</p>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-16">
+      <svg
+        class="animate-spin h-8 w-8 text-blue-600"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+    </div>
+  } @else if (paginatedInvoices.length === 0) {
+    <div class="card text-center py-16">
+      <lucide-icon
+        [img]="Receipt"
+        size="48"
+        color="#d1d5db"
+        class="mx-auto mb-3"
+      ></lucide-icon>
+      <p class="text-gray-500 font-medium">Aucune facture</p>
+      <button
+        (click)="showForm.set(true)"
+        class="btn-primary mt-4 inline-flex items-center gap-2 text-sm"
+      >
+        <lucide-icon [img]="Plus" size="16"></lucide-icon>
+        Nouvelle facture
+      </button>
+    </div>
+  } @else {
+    <div class="space-y-4">
+      @for (inv of paginatedInvoices; track inv.id) {
+        <div class="card">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <h3 class="font-semibold text-gray-900">
+                  {{ getPatientName(inv.patientId) }}
+                </h3>
+                <span [class]="getStatusClass(inv.status)">{{
+                  getStatusLabel(inv.status)
+                }}</span>
+              </div>
+              <div class="flex flex-wrap gap-4 text-xs text-gray-500 mb-3">
+                <span>Facturé le {{ inv.dateFacture }}</span>
+                @if (inv.dateEcheance) {
+                  <span>Échéance {{ inv.dateEcheance }}</span>
+                }
+                <span>{{ inv.lignes.length }} ligne(s)</span>
+              </div>
+
+              <!-- Montants -->
+              <div class="grid grid-cols-3 gap-4">
+                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                  <p class="text-xs text-gray-500 mb-1">Total</p>
+                  <p class="font-bold text-gray-900 text-sm">
+                    {{ formatMontant(inv.montantTotal) }}
+                  </p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-3 text-center">
+                  <p class="text-xs text-gray-500 mb-1">Payé</p>
+                  <p class="font-bold text-green-700 text-sm">
+                    {{ formatMontant(inv.montantPaye) }}
+                  </p>
+                </div>
+                <div
+                  class="rounded-lg p-3 text-center"
+                  [class.bg-red-50]="inv.montantRestant > 0"
+                  [class.bg-gray-50]="inv.montantRestant === 0"
+                >
+                  <p class="text-xs text-gray-500 mb-1">Restant</p>
+                  <p
+                    class="font-bold text-sm"
+                    [class.text-red-700]="inv.montantRestant > 0"
+                    [class.text-gray-400]="inv.montantRestant === 0"
+                  >
+                    {{ formatMontant(inv.montantRestant) }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Lignes -->
+              <div class="mt-3 space-y-1">
+                @for (ligne of inv.lignes; track $index) {
+                  <div
+                    class="flex justify-between text-xs text-gray-600 py-1 border-b border-gray-50"
+                  >
+                    <span>{{ ligne.description }}</span>
+                    <span
+                      >{{ ligne.quantite }} x
+                      {{ formatMontant(ligne.prixUnitaire) }}</span
+                    >
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col gap-2 ml-4">
+              @if (
+                inv.status === "EN_ATTENTE" ||
+                inv.status === "PARTIELLEMENT_PAYEE"
+              ) {
+                <button
+                  (click)="openPaiement(inv)"
+                  class="btn-primary text-xs py-1.5 flex items-center gap-1"
+                >
+                  <lucide-icon [img]="CreditCard" size="14"></lucide-icon>
+                  Paiement
+                </button>
+                <button
+                  (click)="annuler(inv.id)"
+                  class="btn-danger text-xs py-1.5 flex items-center gap-1"
+                >
+                  <lucide-icon [img]="XCircle" size="14"></lucide-icon>
+                  Annuler
+                </button>
+              }
+
+              <!-- Toujours visibles -->
+              <a
+                [routerLink]="['/billing', inv.id]"
+                class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                title="Voir détail"
+              >
+                <lucide-icon [img]="Receipt" size="15"></lucide-icon>
+              </a>
+              <button
+                (click)="downloadPdf(inv.id)"
+                class="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg"
+                title="Télécharger PDF"
+              >
+                <lucide-icon [img]="FileDown" size="15"></lucide-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+    <app-pagination
+      [totalItems]="filteredAll.length"
+      [pageSize]="pageSize()"
+      [currentPage]="currentPage()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    >
+    </app-pagination>
+  }
+</div>
+
+<!-- Paiement Modal -->
+@if (paiementModal() && selectedInvoice()) {
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+  >
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        Enregistrer un paiement
+      </h3>
+      <div class="space-y-3 mb-6">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">Montant total</span>
+          <span class="font-medium">{{
+            formatMontant(selectedInvoice()!.montantTotal)
+          }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">Déjà payé</span>
+          <span class="font-medium text-green-600">{{
+            formatMontant(selectedInvoice()!.montantPaye)
+          }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">Restant</span>
+          <span class="font-bold text-red-600">{{
+            formatMontant(selectedInvoice()!.montantRestant)
+          }}</span>
+        </div>
+        <div class="pt-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Montant à encaisser</label
+          >
+          <input
+            type="number"
+            class="input-field"
+            [ngModel]="montantPaiement()"
+            (ngModelChange)="montantPaiement.set($event)"
+            [max]="selectedInvoice()!.montantRestant"
+          />
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button (click)="paiementModal.set(false)" class="btn-secondary flex-1">
+          Annuler
+        </button>
+        <button
+          (click)="confirmerPaiement()"
+          class="btn-primary flex-1 flex items-center justify-center gap-2"
+        >
+          <lucide-icon [img]="CreditCard" size="16"></lucide-icon>
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showForm()) {
+  <app-invoice-form (saved)="onSaved()" (cancelled)="showForm.set(false)">
+  </app-invoice-form>
+}
