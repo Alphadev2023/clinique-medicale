@@ -29,7 +29,7 @@ public class AuthService {
                 .role(req.role())
                 .build();
         userRepo.save(user);
-        String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
+        String token = jwtService.generateToken(user.getEmail(), user.getRole().name(), user.getId());
         return new AuthResponse(token, user.getRole().name(), user.getNom(), user.getId());
     }
 
@@ -39,7 +39,10 @@ public class AuthService {
         if (!passwordEncoder.matches(req.password(), user.getPassword())) {
             throw new IllegalArgumentException("Email ou mot de passe incorrect");
         }
-        String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
+        if (!user.isActif()) {
+            throw new IllegalArgumentException("Ce compte a été désactivé");
+        }
+        String token = jwtService.generateToken(user.getEmail(), user.getRole().name(), user.getId());
         return new AuthResponse(token, user.getRole().name(), user.getNom(), user.getId());
     }
 }

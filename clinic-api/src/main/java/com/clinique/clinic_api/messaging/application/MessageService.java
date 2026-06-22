@@ -26,8 +26,8 @@ public class MessageService {
                 .destinataireId(req.destinataireId())
                 .contenu(req.contenu() != null ? req.contenu() : "")
                 .type(req.type() != null ? req.type() : MessageType.CHAT)
-                .imageUrl(req.imageUrl())    // ← ajoute cette ligne
-                .lu(false)                   // ← ajoute cette ligne
+                .imageUrl(req.imageUrl())
+                .lu(false)
                 .build();
 
         Message saved = messageRepo.save(message);
@@ -39,6 +39,21 @@ public class MessageService {
                     "/queue/messages",
                     response
             );
+
+            // ← Crée une notification pour le destinataire
+            if (req.type() == MessageType.CHAT) {
+                Message notif = Message.builder()
+                        .expediteurId(req.expediteurId())
+                        .expediteurNom(req.expediteurNom())
+                        .destinataireId(req.destinataireId())
+                        .contenu(req.contenu() != null && !req.contenu().isBlank()
+                                ? req.expediteurNom() + ": " + req.contenu()
+                                : req.expediteurNom() + " a envoyé une image")
+                        .type(MessageType.NOTIFICATION)
+                        .lu(false)
+                        .build();
+                messageRepo.save(notif);
+            }
         } else {
             messagingTemplate.convertAndSend("/topic/messages", response);
         }
@@ -72,7 +87,10 @@ public class MessageService {
     public List<MessageResponse> getConversation(
             String userId1, String userId2) {
         return messageRepo.findConversation(userId1, userId2)
-                .stream().map(this::toResponse).toList();
+                .stream()
+                .filter(m -> m.getType() == MessageType.CHAT)  // ← ajoute ce filtre
+                .map(this::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)

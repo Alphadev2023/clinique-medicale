@@ -86,9 +86,11 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.revenusParMois(mois, annee));
     }
 
+    // InvoiceController.java — méthode downloadPdf(), à remplacer entièrement
+
     @GetMapping("/{id}/pdf")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETAIRE')")
-    public ResponseEntity<byte[]> downloadPdf(@PathVariable String id) {
+    public ResponseEntity<?> downloadPdf(@PathVariable String id) {
         try {
             var invoice = invoiceService.getEntityById(id);
             String patientNom = patientRepo.findById(invoice.getPatientId())
@@ -104,7 +106,9 @@ public class InvoiceController {
 
             return ResponseEntity.ok().headers(headers).body(pdf);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(java.util.Map.of("message", "Erreur PDF : " + e.getMessage()));
         }
     }
 }

@@ -53,4 +53,16 @@ public interface AppointmentJpaRepository extends JpaRepository<Appointment, Str
             @Param("debut") LocalDateTime debut,
             @Param("fin") LocalDateTime fin
     );
+
+    // RDV à rappeler : actifs, pas déjà rappelés, dont le début tombe dans la fenêtre [maintenant, limite]
+    @Query("SELECT a FROM Appointment a WHERE " +
+            "a.status NOT IN :statutsExclus AND " +
+            "a.rappelEnvoye = false AND " +
+            "a.timeSlot.debut <= :limite AND " +
+            "a.timeSlot.debut > :maintenant")
+    List<Appointment> findRdvARappeler(
+            @Param("statutsExclus") List<AppointmentStatus> statutsExclus,
+            @Param("maintenant") LocalDateTime maintenant,
+            @Param("limite") LocalDateTime limite
+    );
 }

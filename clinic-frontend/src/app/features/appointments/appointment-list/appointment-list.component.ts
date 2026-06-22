@@ -6,6 +6,7 @@ import { Appointment } from '../models/appointment.model';
 import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
 import { fadeInUp, listAnimation } from '../../../shared/animations/animations';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   LucideAngularModule,
   CalendarPlus,
@@ -57,7 +58,10 @@ export class AppointmentListComponent implements OnInit {
   currentPage = signal(1);
   pageSize = signal(10);
 
-  constructor(private appointmentService: AppointmentService) {}
+  constructor(
+    private appointmentService: AppointmentService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.loadAppointments();
@@ -65,14 +69,28 @@ export class AppointmentListComponent implements OnInit {
 
   loadAppointments() {
     this.loading.set(true);
-    this.appointmentService.listerTous().subscribe({
-      next: (data) => {
-        this.appointments.set(data);
-        this.applyFilter(this.filterStatus());
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    const role = this.authService.userRole();
+    const userId = this.authService.currentUser()?.id;
+
+    if (role === 'MEDECIN' && userId) {
+      this.appointmentService.listerParMedecin(userId).subscribe({
+        next: (data) => {
+          this.appointments.set(data);
+          this.applyFilter(this.filterStatus());
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+    } else {
+      this.appointmentService.listerTous().subscribe({
+        next: (data) => {
+          this.appointments.set(data);
+          this.applyFilter(this.filterStatus());
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+    }
   }
 
   confirmer(id: string) {

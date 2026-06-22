@@ -4,12 +4,15 @@ import com.clinique.clinic_api.identity.domain.Role;
 import com.clinique.clinic_api.identity.domain.User;
 import com.clinique.clinic_api.identity.infrastructure.UserJpaRepository;
 import com.clinique.clinic_api.identity.interfaces.dto.ChangePasswordRequest;
+import com.clinique.clinic_api.identity.interfaces.dto.ResetPasswordRequest;
 import com.clinique.clinic_api.identity.interfaces.dto.UpdateProfileRequest;
+import com.clinique.clinic_api.identity.interfaces.dto.UpdateUserRequest;
 import com.clinique.clinic_api.identity.interfaces.dto.UserResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -20,6 +23,7 @@ import java.util.List;
 public class UserController {
 
     private final UserJpaRepository userRepo;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/medecins")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETAIRE', 'MEDECIN')")
@@ -89,8 +93,7 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(
             org.springframework.security.core.Authentication auth,
-            @RequestBody ChangePasswordRequest req,
-            org.springframework.security.crypto.password.PasswordEncoder encoder) {
+            @RequestBody ChangePasswordRequest req) {
 
         String email = auth.getName();
         User user = userRepo.findByEmail(email).orElse(null);
@@ -98,11 +101,11 @@ public class UserController {
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
-        if (!encoder.matches(req.ancienMotDePasse(), user.getPassword())) {
+        if (!passwordEncoder.matches(req.ancienMotDePasse(), user.getPassword())) {
             return ResponseEntity.<Void>badRequest().build();
         }
 
-        user.setPassword(encoder.encode(req.nouveauMotDePasse()));
+        user.setPassword(passwordEncoder.encode(req.nouveauMotDePasse()));
         userRepo.save(user);
         return ResponseEntity.<Void>ok().build();
     }
@@ -121,5 +124,45 @@ public class UserController {
                     ));
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable String id,
+            @jakarta.validation.Valid @RequestBody UpdateUserRequest req) {
+
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        if (!user.getEmail().equalsIgnoreCase(req.email()) && userRepo.existsByEmail(req.email())) {
+            throw new IllegalArgumentException("Cet email est déjà utilisé par un autre compte");
+        }
+
+        user.setNom(req.nom());
+        user.setPrenom(req.prenom());
+        user.setEmail(req.email());
+        user.setRole(req.role());
+        userRepo.save(user);
+
+        return ResponseEntity.ok(new UserResponse(
+                user.getId(), user.getNom(), user.getPrenom(),
+                user.getEmail(), user.getRole(), user.isActif()
+        ));
+    }
+
+    @PutMapping("/{id}/reset-password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> resetPassword(
+            @PathVariable String id,
+            @jakarta.validation.Valid @RequestBody ResetPasswordRequest req) {
+
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        user.setPassword(passwordEncoder.encode(req.nouveauMotDePasse()));
+        userRepo.save(user);
+
+        return ResponseEntity.noContent().build();
     }
 }

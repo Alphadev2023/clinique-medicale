@@ -23,7 +23,7 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETAIRE', 'MEDECIN')")  // ← ajoute MEDECIN
     public ResponseEntity<?> creer(@Valid @RequestBody AppointmentRequest req) {
         try {
             return ResponseEntity.ok(appointmentService.creerRdv(req));
@@ -64,19 +64,19 @@ public class AppointmentController {
     }
 
     @PatchMapping("/{id}/confirmer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETAIRE', 'MEDECIN')")  // ← ajoute MEDECIN
     public ResponseEntity<AppointmentResponse> confirmer(@PathVariable String id) {
         return ResponseEntity.ok(appointmentService.confirmer(id));
     }
 
     @PatchMapping("/{id}/annuler")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETAIRE', 'MEDECIN')")  // ← ajoute MEDECIN
     public ResponseEntity<AppointmentResponse> annuler(@PathVariable String id) {
         return ResponseEntity.ok(appointmentService.annuler(id));
     }
 
     @PatchMapping("/{id}/terminer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDECIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDECIN', 'SECRETAIRE')")  // ← ajoute SECRETAIRE
     public ResponseEntity<AppointmentResponse> terminer(@PathVariable String id) {
         return ResponseEntity.ok(appointmentService.terminer(id));
     }

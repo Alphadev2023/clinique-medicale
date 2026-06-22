@@ -1,0 +1,12 @@
+# Crée .gitignore à la racine
+@"
+.env
+clinic-api/uploads/
+clinic-api/target/
+clinic-frontend/node_modules/
+clinic-frontend/dist/
+"@ | Out-File -FilePath .gitignore -Encoding utf8
+
+git add .gitignore
+git commit -m "chore: add root .gitignore"
+git push

@@ -1,0 +1,2 @@
+ALTER TABLE appointments
+    ADD COLUMN rappel_envoye BOOLEAN NOT NULL DEFAULT FALSE;

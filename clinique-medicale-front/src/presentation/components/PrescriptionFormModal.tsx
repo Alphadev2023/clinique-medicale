@@ -1,0 +1,273 @@
+// src/presentation/components/PrescriptionFormModal.tsx
+
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Plus, Trash2 } from "lucide-react";
+import { Modal } from "./ui/Modal";
+import { Button } from "./ui/Button";
+import { Input } from "./ui/Input";
+import { Select } from "./ui/Select";
+import { useCreatePrescription } from "../../application/prescriptions/useCreatePrescription";
+import { usePatients } from "../../application/patients/usePatients";
+import { useMedecins } from "../../application/users/useMedecins";
+import { useAppointments } from "../../application/appointments/useAppointments";
+import { useAuth } from "../../application/auth/useAuth";
+import { getErrorMessage } from "../../infrastructure/apiClient";
+import { getNomComplet as getNomCompletPatient } from "../../domain/patient";
+import { getNomComplet as getNomCompletUser } from "../../domain/user";
+
+const drugLineSchema = z.object({
+  medicament: z.string().min(1, "Médicament requis"),
+  dosage: z.string().min(1, "Dosage requis"),
+  frequence: z.string().min(1, "Fréquence requise"),
+  duree: z.string().min(1, "Durée requise"),
+  instructions: z.string().optional(),
+});
+
+const prescriptionFormSchema = z.object({
+  patientId: z.string().min(1, "Patient requis"),
+  medecinId: z.string().min(1, "Médecin requis"),
+  appointmentId: z.string().optional(),
+  datePrescription: z.string().min(1, "Date de prescription requise"),
+  dateExpiration: z.string().min(1, "Date d'expiration requise"),
+  diagnostic: z.string().optional(),
+  notes: z.string().optional(),
+  medicaments: z.array(drugLineSchema).min(1, "Au moins un médicament requis"),
+});
+
+type PrescriptionFormValues = z.infer<typeof prescriptionFormSchema>;
+
+interface PrescriptionFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  patientIdPreselectionne?: string;
+}
+
+export function PrescriptionFormModal({
+  isOpen,
+  onClose,
+  patientIdPreselectionne,
+}: PrescriptionFormModalProps) {
+  const currentUser = useAuth((state) => state.user);
+  const isMedecin = currentUser?.role === "MEDECIN";
+
+  const { data: patients } = usePatients();
+  const { data: medecins } = useMedecins();
+  const { data: appointments } = useAppointments();
+  const { mutate: creer, isPending, error } = useCreatePrescription();
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PrescriptionFormValues>({
+    resolver: zodResolver(prescriptionFormSchema),
+    defaultValues: {
+      patientId: patientIdPreselectionne ?? "",
+      medecinId: isMedecin && currentUser ? currentUser.id : "",
+      medicaments: [
+        {
+          medicament: "",
+          dosage: "",
+          frequence: "",
+          duree: "",
+          instructions: "",
+        },
+      ],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "medicaments",
+  });
+  const patientId = useWatch({ control, name: "patientId" });
+
+  const patientOptions = (patients ?? []).map((p) => ({
+    value: p.id,
+    label: getNomCompletPatient(p),
+  }));
+  const medecinOptions = (medecins ?? []).map((m) => ({
+    value: m.id,
+    label: getNomCompletUser(m),
+  }));
+  const appointmentsDuPatient = (appointments ?? []).filter(
+    (a) => a.patientId === patientId,
+  );
+  const appointmentOptions = appointmentsDuPatient.map((a) => ({
+    value: a.id,
+    label: new Date(a.debut).toLocaleString("fr-FR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }),
+  }));
+
+  function onSubmit(values: PrescriptionFormValues) {
+    creer(
+      {
+        patientId: values.patientId,
+        medecinId: values.medecinId,
+        appointmentId: values.appointmentId || undefined,
+        datePrescription: values.datePrescription,
+        dateExpiration: values.dateExpiration,
+        medicaments: values.medicaments.map((m) => ({
+          ...m,
+          instructions: m.instructions ?? "",
+        })),
+        diagnostic: values.diagnostic || undefined,
+        notes: values.notes || undefined,
+      },
+      {
+        onSuccess: () => {
+          reset();
+          onClose();
+        },
+      },
+    );
+  }
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Nouvelle prescription"
+      maxWidth="max-w-3xl"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Select
+          label="Patient"
+          required
+          options={patientOptions}
+          placeholder="Sélectionner un patient"
+          error={errors.patientId?.message}
+          {...register("patientId")}
+        />
+        <Select
+          label="Médecin"
+          required
+          options={medecinOptions}
+          placeholder="Sélectionner un médecin"
+          error={errors.medecinId?.message}
+          disabled={isMedecin}
+          {...register("medecinId")}
+        />
+        <Select
+          label="Rendez-vous associé (optionnel)"
+          options={appointmentOptions}
+          placeholder="Aucun"
+          {...register("appointmentId")}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="Date de prescription"
+            type="date"
+            required
+            error={errors.datePrescription?.message}
+            {...register("datePrescription")}
+          />
+          <Input
+            label="Date d'expiration"
+            type="date"
+            required
+            error={errors.dateExpiration?.message}
+            {...register("dateExpiration")}
+          />
+        </div>
+        <Input label="Diagnostic" {...register("diagnostic")} />
+
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700">Médicaments</h3>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() =>
+                append({
+                  medicament: "",
+                  dosage: "",
+                  frequence: "",
+                  duree: "",
+                  instructions: "",
+                })
+              }
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter
+            </Button>
+          </div>
+          {errors.medicaments?.message && (
+            <p className="mb-2 text-sm text-danger-600">
+              {errors.medicaments.message}
+            </p>
+          )}
+          <div className="space-y-3">
+            {fields.map((field, index) => (
+              <div
+                key={field.id}
+                className="space-y-3 rounded-md border border-gray-200 p-3"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="Médicament"
+                    required
+                    error={errors.medicaments?.[index]?.medicament?.message}
+                    {...register(`medicaments.${index}.medicament`)}
+                  />
+                  <Input
+                    label="Dosage"
+                    required
+                    error={errors.medicaments?.[index]?.dosage?.message}
+                    {...register(`medicaments.${index}.dosage`)}
+                  />
+                  <Input
+                    label="Fréquence"
+                    required
+                    error={errors.medicaments?.[index]?.frequence?.message}
+                    {...register(`medicaments.${index}.frequence`)}
+                  />
+                  <Input
+                    label="Durée"
+                    required
+                    error={errors.medicaments?.[index]?.duree?.message}
+                    {...register(`medicaments.${index}.duree`)}
+                  />
+                </div>
+                <Input
+                  label="Instructions"
+                  {...register(`medicaments.${index}.instructions`)}
+                />
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => remove(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Input label="Notes" {...register("notes")} />
+
+        {error && (
+          <p className="text-sm text-danger-600">{getErrorMessage(error)}</p>
+        )}
+
+        <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button type="submit" variant="primary" isLoading={isPending}>
+            Créer
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

@@ -37,4 +37,7 @@ export class AppointmentService {
   terminer(id: string): Observable<Appointment> {
     return this.http.patch<Appointment>(`${this.api}/${id}/terminer`, {});
   }
+  listerParMedecin(medecinId: string): Observable<Appointment[]> {
+    return this.http.get<Appointment[]>(`${this.api}/medecin/${medecinId}`);
+  }
 }

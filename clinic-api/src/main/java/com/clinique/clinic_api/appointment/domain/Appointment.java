@@ -33,6 +33,10 @@ public class Appointment {
     @Builder.Default
     private AppointmentStatus status = AppointmentStatus.PLANIFIE;
 
+    @Builder.Default
+    @Column(name = "rappel_envoye", nullable = false)
+    private boolean rappelEnvoye = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

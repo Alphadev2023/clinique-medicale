@@ -22,13 +22,13 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String email, String role) {
+    public String generateToken(String email, String role, String userId) {
         return Jwts.builder()
-                .subject(email)                          // setSubject() → subject()
-                .claims(Map.of("role", role))            // addClaims()  → claims()
-                .issuedAt(new Date())                    // setIssuedAt() → issuedAt()
+                .subject(email)
+                .claims(Map.of("role", role, "userId", userId))
+                .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getKey())                      // plus besoin de préciser l'algo
+                .signWith(getKey())
                 .compact();
     }
 
@@ -55,5 +55,9 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)                // parseClaimsJws() → parseSignedClaims()
                 .getPayload();                           // getBody() → getPayload()
+    }
+
+    public String extractUserId(String token) {
+        return getClaims(token).get("userId", String.class);
     }
 }

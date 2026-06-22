@@ -257,19 +257,8 @@
                   {{ msg.expediteurNom }}
                 </p>
               }
-              <div
-                class="px-4 py-2.5 rounded-2xl text-sm shadow-sm"
-                [class.bg-blue-600]="isMyMessage(msg)"
-                [class.text-white]="isMyMessage(msg)"
-                [class.rounded-br-none]="isMyMessage(msg)"
-                [class.bg-white]="!isMyMessage(msg)"
-                [class.text-gray-800]="!isMyMessage(msg)"
-                [class.rounded-bl-none]="!isMyMessage(msg)"
-                [class.border]="!isMyMessage(msg)"
-                [class.border-gray-100]="!isMyMessage(msg)"
-              >
-                {{ msg.contenu }}
-              </div>
+
+              <!-- UNE SEULE BULLE -->
               <div
                 class="px-4 py-2.5 rounded-2xl text-sm shadow-sm"
                 [class.bg-blue-600]="isMyMessage(msg)"
@@ -293,6 +282,7 @@
                   />
                 }
               </div>
+
               <p
                 class="text-xs text-gray-400 mt-1 px-1"
                 [class.text-right]="isMyMessage(msg)"

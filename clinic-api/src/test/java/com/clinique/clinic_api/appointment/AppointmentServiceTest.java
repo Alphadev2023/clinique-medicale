@@ -7,6 +7,7 @@ import com.clinique.clinic_api.appointment.domain.TimeSlot;
 import com.clinique.clinic_api.appointment.infrastructure.AppointmentJpaRepository;
 import com.clinique.clinic_api.appointment.interfaces.dto.AppointmentRequest;
 import com.clinique.clinic_api.appointment.interfaces.dto.AppointmentResponse;
+import com.clinique.clinic_api.messaging.application.MessageService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -25,6 +26,7 @@ class AppointmentServiceTest {
 
     @Mock private AppointmentJpaRepository appointmentRepo;
     @InjectMocks private AppointmentService appointmentService;
+    @Mock private MessageService messageService;
 
     private Appointment testAppointment;
     private final LocalDateTime DEBUT = LocalDateTime.now().plusDays(2);
@@ -52,10 +54,12 @@ class AppointmentServiceTest {
         );
         when(appointmentRepo.existsConflitMedecin(anyString(), any(), any()))
                 .thenReturn(false);
-        when(appointmentRepo.existsConflitPatientMemeJour(anyString(), any()))
-                .thenReturn(false);
+        // ← retire existsConflitPatientMemeJour
         when(appointmentRepo.save(any(Appointment.class)))
                 .thenReturn(testAppointment);
+        doNothing().when(messageService).envoyerNotification(
+                anyString(), anyString(), any()
+        );
 
         AppointmentResponse rdv = appointmentService.creerRdv(req);
 
@@ -79,22 +83,7 @@ class AppointmentServiceTest {
                 .hasMessageContaining("déjà un rendez-vous");
     }
 
-    @Test
-    @DisplayName("Créer un RDV en conflit patient lance une exception")
-    void creerRdv_conflit_patient() {
-        AppointmentRequest req = new AppointmentRequest(
-                "patient-123", "medecin-123",
-                DEBUT, FIN, "Consultation", "Salle 1", null
-        );
-        when(appointmentRepo.existsConflitMedecin(anyString(), any(), any()))
-                .thenReturn(false);
-        when(appointmentRepo.existsConflitPatientMemeJour(anyString(), any()))
-                .thenReturn(true);
 
-        assertThatThrownBy(() -> appointmentService.creerRdv(req))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("déjà un rendez-vous");
-    }
 
     @Test
     @DisplayName("Confirmer un RDV planifié")

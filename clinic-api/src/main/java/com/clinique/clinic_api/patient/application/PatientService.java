@@ -90,8 +90,8 @@ public class PatientService {
         return new PatientResponse(
                 p.getId(), p.getNom(), p.getPrenom(), p.getEmail(),
                 p.getTelephone(), p.getDateNaissance(), p.getGenre(),
-                p.getAdresse(), p.getHistoriqueMedical(),
-                p.getAllergies(), p.getCreatedAt()
+                p.getAdresse(), p.getNumeroSecuriteSociale(),
+                p.getHistoriqueMedical(), p.getAllergies(), p.getCreatedAt()
         );
     }
 }

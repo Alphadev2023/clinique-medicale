@@ -53,7 +53,7 @@ class AuthServiceTest {
                 .thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("admin123", "encodedPassword"))
                 .thenReturn(true);
-        when(jwtService.generateToken(anyString(), anyString()))
+        when(jwtService.generateToken(anyString(), anyString(), anyString()))
                 .thenReturn("jwt-token");
 
         AuthResponse response = authService.login(req);
@@ -101,7 +101,7 @@ class AuthServiceTest {
         when(userRepo.existsByEmail("nouveau@clinique.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("encodedPass");
         when(userRepo.save(any(User.class))).thenReturn(testUser);
-        when(jwtService.generateToken(anyString(), anyString()))
+        when(jwtService.generateToken(anyString(), anyString(), anyString()))
                 .thenReturn("jwt-token");
 
         AuthResponse response = authService.register(req);

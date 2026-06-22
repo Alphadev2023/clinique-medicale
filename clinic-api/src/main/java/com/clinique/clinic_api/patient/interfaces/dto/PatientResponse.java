@@ -1,4 +1,3 @@
-// PatientResponse.java
 package com.clinique.clinic_api.patient.interfaces.dto;
 
 import com.clinique.clinic_api.patient.domain.Allergy;
@@ -17,6 +16,7 @@ public record PatientResponse(
         LocalDate dateNaissance,
         Genre genre,
         String adresse,
+        String numeroSecuriteSociale,
         MedicalHistory historiqueMedical,
         List<Allergy> allergies,
         LocalDateTime createdAt

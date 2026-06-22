@@ -15,6 +15,8 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
 @Service
 public class InvoicePdfService {
@@ -32,7 +34,14 @@ public class InvoicePdfService {
 
             PDFont fontBold    = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
             PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+            // par ce bloc :
+
             NumberFormat nf = NumberFormat.getInstance(Locale.FRANCE);
+            if (nf instanceof DecimalFormat decimalFormat) {
+                DecimalFormatSymbols symboles = decimalFormat.getDecimalFormatSymbols();
+                symboles.setGroupingSeparator(' '); // espace normale (U+0020), pas l'espace fine insécable (U+202F)
+                decimalFormat.setDecimalFormatSymbols(symboles);
+            }
 
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
 

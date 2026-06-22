@@ -106,12 +106,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.notifCount.set(notifs.length);
       },
     });
-    // Aussi compter les messages non lus
-    this.messageService.countNonLus(userId).subscribe({
-      next: (count) => {
-        this.notifCount.update((n) => n + count);
-      },
-    });
   }
 
   toggleNotifPanel() {
